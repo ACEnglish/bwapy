@@ -31,7 +31,11 @@ else:
 # Get requirements from file, we prefer to have
 #   preinstalled these with pip to make use of wheels.
 dir_path = os.path.dirname(__file__)
-install_requires = []
+install_requires = [
+        "wheel>=0.34.2",
+        "setuptools>=49.2.0",
+    ]
+
 with open(os.path.join(dir_path, 'requirements.txt')) as fh:
     reqs = (
         r.split('#')[0].strip()
@@ -57,6 +61,42 @@ extensions.append(Extension(
 ))
 
 
+from distutils.command.install import install as DistutilsInstall
+from distutils.command.build import build
+from subprocess import call
+
+
+class MyBuild(build):
+    def run(self):
+        # run original build code
+        build_path = os.path.abspath(self.build_temp)
+        # call(["make", "clean"], cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), "bwa"))
+        cmd = ['make', "bwa/libbwa.a"]
+        call(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
+        self.mkpath(self.build_lib)
+        target_files = glob(os.path.join(build_path, "bwa/libbwa.a"))
+        if not self.dry_run:
+            for target in target_files:
+                self.copy_file(target, self.build_lib)
+        build.run(self)
+
+
+class MyInstall(DistutilsInstall):
+    def run(self):
+        my_path = os.path.dirname(os.path.abspath(__file__))
+        print(os.listdir(my_path))
+        os.system(f"cd {my_path}; make bwa/libbwa.a")
+        DistutilsInstall.run(self)
+
+import setuptools.command.build_py
+
+class BuildPyCommand(setuptools.command.build_py.build_py):
+    """Custom build command."""
+
+    def run(self):
+        self.run_command('make bwa/libbwa.a')
+        setuptools.command.build_py.build_py.run(self)
+
 setup(
     name=__pkg_name__,
     version=__version__,
@@ -79,5 +119,7 @@ setup(
             'bwamempy = {}.libbwa:main'.format(__pkg_name__)
         ]
     },
-    scripts=[]
+    scripts=[],
+    #cmdclass={'install':MyInstall},
+    cmdclass={'build':MyBuild},
 )
