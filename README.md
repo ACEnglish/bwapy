@@ -28,8 +28,7 @@ therefore run:
 
     git clone --recursive https://github.com/nanoporetech/bwapy.git
     cd bwapy
-    make bwa/libbwa.a 
-    python setup.py install
+    python3 -m pip install . 
 
 
 Performing Alignments
