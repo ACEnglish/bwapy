@@ -55,7 +55,8 @@ extensions.append(Extension(
     'bwalib',
     sources=[os.path.join('bwapy', 'libbwapy.c'), os.path.join('bwapy', 'memopts.c')],
     include_dirs=['bwa'],
-    extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-march=native', '-ffast-math', '-DUSE_SSE2', '-DNDEBUG'],
+    #extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-march=native', '-ffast-math', '-DUSE_SSE2', '-DNDEBUG'],
+    extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-ffast-math', '-DUSE_SSE2', '-DNDEBUG'],
     libraries=['z'],
     extra_objects=[os.path.join('bwa','libbwa.a')]
 ))
@@ -72,7 +73,7 @@ class MyBuild(build):
         build_path = os.path.abspath(self.build_temp)
         # call(["make", "clean"], cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), "bwa"))
         cmd = ['make', "bwa/libbwa.a"]
-        call(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
+        #call(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
         self.mkpath(self.build_lib)
         target_files = glob(os.path.join(build_path, "bwa/libbwa.a"))
         if not self.dry_run:
@@ -94,7 +95,7 @@ class BuildPyCommand(setuptools.command.build_py.build_py):
     """Custom build command."""
 
     def run(self):
-        self.run_command('make bwa/libbwa.a')
+        #self.run_command('make bwa/libbwa.a')
         setuptools.command.build_py.build_py.run(self)
 
 setup(
