@@ -8,7 +8,6 @@ from glob import glob
 from setuptools import setup, find_packages, Extension
 from setuptools import Distribution, Command
 from setuptools.command.install import install
-import pkg_resources
 
 
 __pkg_name__ = 'bwapy'
@@ -56,7 +55,11 @@ extensions.append(Extension(
     sources=[os.path.join('bwapy', 'libbwapy.c'), os.path.join('bwapy', 'memopts.c')],
     include_dirs=['bwa'],
     #extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-march=native', '-ffast-math', '-DUSE_SSE2', '-DNDEBUG'],
-    extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-ffast-math', '-DUSE_SSE2', '-DNDEBUG'],
+    # '-ffast-math' implies '-ffinite-math-only', which emits references to
+    # glibc's '__log_finite' family of symbols. Those were removed in glibc 2.31
+    # (2020), so the resulting bwalib*.so fails to load on modern systems with
+    # 'undefined symbol: __log_finite'. Use '-fno-finite-math-only' instead.
+    extra_compile_args=['-pedantic', '-Wall', '-std=c99', '-fno-finite-math-only', '-DUSE_SSE2', '-DNDEBUG'],
     libraries=['z'],
     extra_objects=[os.path.join('bwa','libbwa.a')]
 ))
@@ -73,7 +76,10 @@ class MyBuild(build):
         build_path = os.path.abspath(self.build_temp)
         # call(["make", "clean"], cwd=os.path.join(os.path.dirname(os.path.abspath(__file__)), "bwa"))
         cmd = ['make', "bwa/libbwa.a"]
-        #call(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
+        # Actually build the bwa static library. Without this the linker uses a
+        # stale/prebuilt libbwa.a (or fails), which is how the '__log_finite'
+        # breakage slipped through previously.
+        call(cmd, cwd=os.path.dirname(os.path.abspath(__file__)))
         self.mkpath(self.build_lib)
         target_files = glob(os.path.join(build_path, "bwa/libbwa.a"))
         if not self.dry_run:
