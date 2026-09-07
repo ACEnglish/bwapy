@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <stdlib.h>
 #include "bwamem.h"
 
 static PyMethodDef module_functions[] = {
@@ -54,7 +55,7 @@ extern "C" {
 #  define MODULE_API
 #endif
 
-MODULE_API int module_init();
+MODULE_API int module_init(void);
 
 #ifdef __cplusplus
 }
